@@ -5,7 +5,7 @@
 
 [versions]
 blek = "2.0.0-alpha10"
-common = "2.6.2"
+common = "2.8.2"
 
 [libraries]
 # Native Android client for Bluetooth LE.
