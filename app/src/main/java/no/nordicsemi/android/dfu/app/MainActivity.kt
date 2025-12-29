@@ -34,12 +34,16 @@ package no.nordicsemi.android.dfu.app
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import dagger.hilt.android.AndroidEntryPoint
 import no.nordicsemi.android.common.navigation.NavigationView
 import no.nordicsemi.android.common.theme.NordicActivity
-import no.nordicsemi.android.common.theme.NordicTheme
 import no.nordicsemi.android.dfu.analytics.DfuAnalytics
 import no.nordicsemi.android.dfu.analytics.HandleDeepLinkEvent
+import no.nordicsemi.android.dfu.app.onboarding.OnboardingRepository
+import no.nordicsemi.android.dfu.app.onboarding.OnboardingScreen
+import no.nordicsemi.android.dfu.app.theme.DaylightTheme
 import no.nordicsemi.android.dfu.navigation.DfuDestinations
 import no.nordicsemi.android.dfu.storage.DeepLinkHandler
 import javax.inject.Inject
@@ -52,6 +56,9 @@ class MainActivity : NordicActivity() {
 
     @Inject
     lateinit var analytics: DfuAnalytics
+    
+    @Inject
+    lateinit var onboardingRepository: OnboardingRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,8 +68,24 @@ class MainActivity : NordicActivity() {
         }
 
         setContent {
-            NordicTheme {
-                NavigationView(DfuDestinations)
+            DaylightTheme {
+                var showOnboarding by remember { mutableStateOf(true) }
+                val isOnboardingCompleted by onboardingRepository.isOnboardingCompleted
+                    .collectAsStateWithLifecycle(initialValue = false)
+                
+                LaunchedEffect(isOnboardingCompleted) {
+                    showOnboarding = !isOnboardingCompleted
+                }
+                
+                if (showOnboarding) {
+                    OnboardingScreen(
+                        onComplete = {
+                            showOnboarding = false
+                        }
+                    )
+                } else {
+                    NavigationView(DfuDestinations)
+                }
             }
         }
     }

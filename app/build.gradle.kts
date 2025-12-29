@@ -34,4 +34,13 @@ dependencies {
     implementation(nordic.blek.client.android)
 
     implementation(libs.androidx.activity.compose)
+    
+    // DataStore for onboarding state
+    implementation(libs.androidx.dataStore.preferences)
+    
+    // Material icons for Compose
+    implementation(libs.androidx.compose.material.icons.extended)
+
+    // Hilt integration with Jetpack Compose navigation
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 }
