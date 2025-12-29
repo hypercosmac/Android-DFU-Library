@@ -1,9 +1,12 @@
 package no.nordicsemi.android.dfu.app.onboarding.screens
 
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,8 +17,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import no.nordicsemi.android.dfu.app.theme.DaylightColors
 import no.nordicsemi.android.dfu.app.theme.DaylightTheme
+import no.nordicsemi.android.dfu.app.R
 
 @Composable
 fun GuidanceScreen(
@@ -35,7 +41,7 @@ fun GuidanceScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Subtle line drawing animation placeholder
+                // Subtle line drawing animation over product image
                 val infiniteTransition = rememberInfiniteTransition(label = "drawing")
                 val drawingAlpha by infiniteTransition.animateFloat(
                     initialValue = 0f,
@@ -47,13 +53,21 @@ fun GuidanceScreen(
                     label = "drawing"
                 )
                 
-                // Placeholder for clamshell illustration
-                Box(
-                    modifier = Modifier
-                        .size(300.dp)
-                        .background(DaylightColors.Surface.copy(alpha = 0.3f))
-                        .alpha(drawingAlpha)
-                )
+                Surface(
+                    modifier = Modifier.size(260.dp),
+                    shape = RoundedCornerShape(40.dp),
+                    color = DaylightColors.Surface,
+                    tonalElevation = 8.dp
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.keyboard_case_guidance),
+                        contentDescription = "Keyboard case open",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .alpha(drawingAlpha)
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(64.dp))
                 

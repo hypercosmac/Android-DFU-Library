@@ -48,6 +48,9 @@ fun OnboardingScreen(
                     onStartScan = {
                         viewModel.startScanning()
                     },
+                    onPairClick = {
+                        viewModel.connectToDevice()
+                    },
                     onContinue = {
                         viewModel.navigateToStep(OnboardingStep.Guidance)
                     }
