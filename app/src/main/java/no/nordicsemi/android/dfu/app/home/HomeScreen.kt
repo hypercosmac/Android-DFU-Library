@@ -45,63 +45,71 @@ fun HomeScreen(
             )
             
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-            ) {
-                Spacer(modifier = Modifier.height(32.dp))
-                
-                // Title
-                Text(
-                    text = "Device Manager",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = DaylightColors.TextPrimary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(bottom = 8.dp)
+                // Background image at 20% opacity
+                Image(
+                    painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(0.2f)
                 )
-                
-                Text(
-                    text = "Manage your keyboard and firmware",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = DaylightColors.TextSecondary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 32.dp)
-                )
-                
-                // Navigation Cards
-                NavigationCard(
-                    title = "Firmware Updates",
-                    description = "Update device firmware over-the-air",
-                    icon = Icons.Default.CloudUpload,
-                    onClick = onNavigateToDFU,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                NavigationCard(
-                    title = "Keyboard Configuration",
-                    description = "Configure keyboard settings and preferences",
-                    icon = Icons.Default.Settings,
-                    onClick = onNavigateToKeyboardConfig,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                NavigationCard(
-                    title = "Start Onboarding",
-                    description = "Pair a new device or reset connection",
-                    icon = Icons.Default.Bluetooth,
-                    onClick = onNavigateToOnboarding,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.weight(1f))
-            }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    
+                    // Title
+                    Text(
+                        text = "Daylight Keyboard Case",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = DaylightColors.TextPrimary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    
+                    Text(
+                        text = "Manage your keyboard and firmware",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = DaylightColors.TextSecondary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = 32.dp)
+                    )
+                    
+                    // Navigation Cards
+                    NavigationCard(
+                        title = "Firmware Updates",
+                        description = "Update device firmware over-the-air",
+                        icon = Icons.Default.CloudUpload,
+                        onClick = onNavigateToDFU,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    NavigationCard(
+                        title = "Keyboard Configuration",
+                        description = "Configure keyboard settings and preferences",
+                        icon = Icons.Default.Settings,
+                        onClick = onNavigateToKeyboardConfig,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    NavigationCard(
+                        title = "Start Onboarding",
+                        description = "Pair a new device or reset connection",
+                        icon = Icons.Default.Bluetooth,
+                        onClick = onNavigateToOnboarding,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
         }
     }

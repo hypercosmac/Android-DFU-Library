@@ -180,6 +180,7 @@ internal class DFUViewModel @Inject constructor(
             OnSelectDeviceButtonClick -> requestBluetoothDevice()
             OnSettingsButtonClick -> navigator.navigateTo(DfuSettings)
             OnLoggerButtonClick -> repository.openLogger()
+            OnNavigateToHome -> navigator.navigateUp()
         }
     }
 

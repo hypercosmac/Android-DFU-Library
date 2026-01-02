@@ -196,13 +196,15 @@ class BluetoothManager @Inject constructor(
 
         // Start BLE scanning if available
         if (bluetoothLeScanner != null) {
-            // Configure scan settings for better discovery
+            // Configure scan settings for better discovery - use balanced mode for better device discovery
             val scanSettings = ScanSettings.Builder()
-                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setScanMode(ScanSettings.SCAN_MODE_BALANCED) // Use balanced mode to find more devices
                 .setReportDelay(0) // Report results immediately
+                .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES) // Get all matches
                 .build()
 
             // Start scanning with no filters to find all devices
+            // Passing null as filters means scan for all devices
             try {
                 bluetoothLeScanner.startScan(null, scanSettings, scanCallback)
             } catch (e: Exception) {
@@ -225,6 +227,7 @@ class BluetoothManager @Inject constructor(
                                     val rssi: Short = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE)
                                     
                                     device?.let {
+                                        // Always add classic Bluetooth devices, even without names
                                         val deviceName = it.name ?: "Device ${it.address.takeLast(5)}"
                                         val discoveredDevice = DiscoveredDevice(
                                             name = deviceName,
@@ -233,16 +236,23 @@ class BluetoothManager @Inject constructor(
                                             device = it
                                         )
                                         
-                                        // Update discovered devices list
+                                        // Update discovered devices list - always add new devices
                                         val currentDevices = _discoveredDevices.value.toMutableList()
                                         val existingIndex = currentDevices.indexOfFirst { d -> d.address == discoveredDevice.address }
                                         
                                         if (existingIndex >= 0) {
-                                            // Update if RSSI is better
-                                            if (rssi.toInt() > currentDevices[existingIndex].rssi) {
+                                            // Update if RSSI is better or if we got a name
+                                            val existing = currentDevices[existingIndex]
+                                            val shouldUpdate = if (existing.name == null || existing.name.startsWith("Device ")) {
+                                                !deviceName.startsWith("Device ") || rssi.toInt() > existing.rssi
+                                            } else {
+                                                rssi.toInt() > existing.rssi
+                                            }
+                                            if (shouldUpdate) {
                                                 currentDevices[existingIndex] = discoveredDevice
                                             }
                                         } else {
+                                            // Always add new device
                                             currentDevices.add(discoveredDevice)
                                         }
                                         
@@ -287,6 +297,7 @@ class BluetoothManager @Inject constructor(
         val device = scanResult.device
         val rssi = scanResult.rssi
         
+        // Always add devices, even if they don't have names
         // Get device name from device or scan record
         var deviceName: String? = device.name
         if (deviceName == null) {
@@ -301,7 +312,7 @@ class BluetoothManager @Inject constructor(
             }
         }
         
-        // Use MAC address as fallback if no name
+        // Use MAC address as fallback if no name - always show the device
         if (deviceName.isNullOrBlank()) {
             deviceName = "Device ${device.address.takeLast(5)}"
         }
@@ -314,24 +325,25 @@ class BluetoothManager @Inject constructor(
         )
 
         // Update discovered devices list, avoiding duplicates
+        // Always add/update devices found during scanning
         val currentDevices = _discoveredDevices.value.toMutableList()
         val existingIndex = currentDevices.indexOfFirst { it.address == discoveredDevice.address }
         
         if (existingIndex >= 0) {
-            // Update existing device (might have better RSSI or name)
+            // Update existing device - always update with latest info
             val existing = currentDevices[existingIndex]
-            // Prefer device with a name over one without
+            // Prefer device with a name over one without, or better RSSI
             val shouldUpdate = if (existing.name == null || existing.name.startsWith("Device ")) {
                 deviceName != null && !deviceName.startsWith("Device ")
             } else {
-                // Update if RSSI is better or if we got a name
-                rssi > existing.rssi || (deviceName != null && existing.name == null)
+                // Update if RSSI is better (for same device)
+                rssi > existing.rssi
             }
             if (shouldUpdate) {
                 currentDevices[existingIndex] = discoveredDevice
             }
         } else {
-            // Add new device
+            // Always add new device - don't filter anything out
             currentDevices.add(discoveredDevice)
         }
         

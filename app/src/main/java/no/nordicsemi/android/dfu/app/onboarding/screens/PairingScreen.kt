@@ -444,13 +444,9 @@ private fun DeviceListItem(
             .fillMaxWidth()
             .clickable(enabled = !isConnected, onClick = onClick),
         shape = RoundedCornerShape(16.dp),
-        color = if (isHighlighted) {
-            DaylightColors.PrimaryAccent.copy(alpha = 0.15f)
-        } else {
-            DaylightColors.Surface.copy(alpha = 0.6f)
-        },
-        tonalElevation = if (isHighlighted) 4.dp else 2.dp,
-        shadowElevation = if (isHighlighted) 2.dp else 1.dp,
+        color = Color.Transparent,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
         border = if (isHighlighted) {
             BorderStroke(
                 2.dp,
@@ -458,6 +454,18 @@ private fun DeviceListItem(
             )
         } else null
     ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    color = if (isHighlighted) {
+                        DaylightColors.PrimaryAccent.copy(alpha = 0.15f)
+                    } else {
+                        DaylightColors.Overlay.copy(alpha = 0.08f)
+                    },
+                    shape = RoundedCornerShape(16.dp)
+                )
+        ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -512,6 +520,7 @@ private fun DeviceListItem(
                 tint = if (isConnected) DaylightColors.PrimaryAccent else if (isHighlighted) DaylightColors.PrimaryAccent else DaylightColors.TextSecondary,
                 modifier = Modifier.size(24.dp)
             )
+        }
         }
     }
 }

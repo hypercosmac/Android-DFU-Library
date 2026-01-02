@@ -52,3 +52,5 @@ internal data object NavigateUp : DFUViewEvent()
 internal data object OnSettingsButtonClick : DFUViewEvent()
 
 internal data object OnLoggerButtonClick : DFUViewEvent()
+
+internal data object OnNavigateToHome : DFUViewEvent()
