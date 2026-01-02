@@ -25,8 +25,7 @@ data class OnboardingUiState(
     val currentStep: OnboardingStep = OnboardingStep.Welcome,
     val isScanning: Boolean = false,
     val foundDevice: BluetoothDevice? = null,
-    val isConnected: Boolean = false,
-    val preferences: OnboardingPreferences = OnboardingPreferences()
+    val isConnected: Boolean = false
 )
 
 @HiltViewModel
@@ -56,14 +55,18 @@ class OnboardingViewModel @Inject constructor(
         return object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
                 val device = result.device
-                val name = device.name ?: ""
-                val scanRecord = result.scanRecord
-                
-                // Check if device name starts with DAYLIGHT_KB or matches expected pattern
-                val deviceName = scanRecord?.deviceName ?: name
-                if (name.contains("DAYLIGHT", ignoreCase = true) || 
-                    name.contains("KEYBOARD", ignoreCase = true) ||
-                    deviceName?.contains("DAYLIGHT", ignoreCase = true) == true) {
+                // Accept all devices regardless of name/manufacturer
+                stopScanning()
+                _uiState.value = _uiState.value.copy(
+                    foundDevice = device,
+                    isScanning = false
+                )
+            }
+            
+            override fun onBatchScanResults(results: MutableList<ScanResult>) {
+                // Accept the first device found
+                if (results.isNotEmpty()) {
+                    val device = results[0].device
                     stopScanning()
                     _uiState.value = _uiState.value.copy(
                         foundDevice = device,
@@ -94,21 +97,8 @@ class OnboardingViewModel @Inject constructor(
             .build()
         
         val callback = scanCallback ?: return
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                val filters = listOf(
-                    ScanFilter.Builder()
-                        .setDeviceName("DAYLIGHT_KB*")
-                        .build()
-                )
-                bluetoothLeScanner?.startScan(filters, settings, callback)
-            } else {
-                bluetoothLeScanner?.startScan(null, settings, callback)
-            }
-        } catch (e: Exception) {
-            // Fallback to unfiltered scan
-            bluetoothLeScanner?.startScan(null, settings, callback)
-        }
+        // Scan for all devices without filters
+        bluetoothLeScanner?.startScan(null, settings, callback)
     }
     
     fun stopScanning() {
@@ -126,13 +116,8 @@ class OnboardingViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isConnected = true)
     }
     
-    fun updatePreferences(preferences: OnboardingPreferences) {
-        _uiState.value = _uiState.value.copy(preferences = preferences)
-    }
-    
     fun completeOnboarding() {
         viewModelScope.launch {
-            repository.savePreferences(_uiState.value.preferences)
             repository.completeOnboarding()
         }
     }

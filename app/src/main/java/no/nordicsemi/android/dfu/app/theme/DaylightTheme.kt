@@ -7,31 +7,31 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-// Daylight Color Palette
+// Grayscale Color Palette
 object DaylightColors {
-    // Background (Primary): Warm Off-White
-    val BackgroundPrimary = Color(0xFFF5F4F1)
+    // Background (Primary): Pure White
+    val BackgroundPrimary = Color(0xFFFFFFFF)
     
-    // Surface (Cards): Soft Gray
-    val Surface = Color(0xFFE8E6E1)
+    // Surface (Cards): Light Gray
+    val Surface = Color(0xFFF5F5F5)
     
-    // Overlay (Glass): Frosted Gray (8-12% alpha)
-    val Overlay = Color(0xFFDAD7D0).copy(alpha = 0.1f)
+    // Overlay (Glass): Light Gray with transparency
+    val Overlay = Color(0xFFE0E0E0).copy(alpha = 0.1f)
     
-    // Primary Accent: Daylight Amber
-    val PrimaryAccent = Color(0xFFF2A33A)
+    // Primary Accent: Dark Gray (for buttons/accents)
+    val PrimaryAccent = Color(0xFF424242)
     
-    // Text Primary: Charcoal
-    val TextPrimary = Color(0xFF2B2B2B)
+    // Text Primary: Black
+    val TextPrimary = Color(0xFF000000)
     
-    // Text Secondary: Muted Gray
-    val TextSecondary = Color(0xFF6F6F6F)
+    // Text Secondary: Medium Gray
+    val TextSecondary = Color(0xFF757575)
 }
 
 private val DaylightLightColorScheme = lightColorScheme(
     primary = DaylightColors.PrimaryAccent,
     onPrimary = Color.White,
-    primaryContainer = DaylightColors.PrimaryAccent.copy(alpha = 0.1f),
+    primaryContainer = Color(0xFFE0E0E0),
     onPrimaryContainer = DaylightColors.TextPrimary,
     
     secondary = DaylightColors.TextSecondary,
@@ -39,37 +39,37 @@ private val DaylightLightColorScheme = lightColorScheme(
     secondaryContainer = DaylightColors.Surface,
     onSecondaryContainer = DaylightColors.TextPrimary,
     
-    tertiary = DaylightColors.PrimaryAccent.copy(alpha = 0.8f),
+    tertiary = Color(0xFF616161),
     onTertiary = Color.White,
     
-    error = Color(0xFFBA1A1A),
+    error = Color(0xFF424242),
     onError = Color.White,
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002),
+    errorContainer = Color(0xFFE0E0E0),
+    onErrorContainer = Color(0xFF000000),
     
-    background = DaylightColors.BackgroundPrimary,
+    background = Color.White,
     onBackground = DaylightColors.TextPrimary,
     
-    surface = DaylightColors.Surface,
+    surface = Color.White,
     onSurface = DaylightColors.TextPrimary,
-    surfaceVariant = DaylightColors.Surface.copy(alpha = 0.5f),
+    surfaceVariant = DaylightColors.Surface,
     onSurfaceVariant = DaylightColors.TextSecondary,
     
-    outline = DaylightColors.TextSecondary.copy(alpha = 0.3f),
-    outlineVariant = DaylightColors.TextSecondary.copy(alpha = 0.1f),
+    outline = Color(0xFFBDBDBD),
+    outlineVariant = Color(0xFFE0E0E0),
     
     scrim = Color.Black.copy(alpha = 0.32f),
     inverseSurface = DaylightColors.TextPrimary,
-    inverseOnSurface = DaylightColors.BackgroundPrimary,
-    inversePrimary = DaylightColors.PrimaryAccent,
+    inverseOnSurface = Color.White,
+    inversePrimary = Color.White,
     
     surfaceDim = DaylightColors.Surface,
-    surfaceBright = DaylightColors.BackgroundPrimary,
+    surfaceBright = Color.White,
     surfaceContainerLowest = Color.White,
-    surfaceContainerLow = DaylightColors.BackgroundPrimary,
-    surfaceContainer = DaylightColors.Surface,
-    surfaceContainerHigh = DaylightColors.Surface.copy(alpha = 0.8f),
-    surfaceContainerHighest = DaylightColors.Surface.copy(alpha = 0.6f),
+    surfaceContainerLow = Color.White,
+    surfaceContainer = Color.White,
+    surfaceContainerHigh = Color.White,
+    surfaceContainerHighest = Color.White,
 )
 
 @Composable
