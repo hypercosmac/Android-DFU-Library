@@ -1,6 +1,7 @@
 package no.nordicsemi.android.dfu.app.onboarding.screens
 
 import androidx.compose.animation.core.*
+import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -10,11 +11,17 @@ import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -34,13 +41,58 @@ fun PairingScreen(
     onPairClick: () -> Unit,
     onContinue: () -> Unit
 ) {
+    // Entrance animations
+    var visible by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        visible = true
+    }
+    
+    val cardScale by animateFloatAsState(
+        targetValue = if (visible) 1f else 0.95f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "card_scale"
+    )
+    
+    val cardAlpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = tween(500, easing = FastOutSlowInEasing),
+        label = "card_alpha"
+    )
+    
+    var buttonPressed by remember { mutableStateOf(false) }
+    
     DaylightTheme {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(DaylightColors.BackgroundPrimary),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            // Background image at 20% opacity
+            Image(
+                painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(0.2f)
+            )
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                DaylightColors.BackgroundPrimary,
+                                DaylightColors.Surface.copy(alpha = 0.5f)
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
@@ -48,13 +100,16 @@ fun PairingScreen(
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top "dashboard" card inspired by neumorphic layout
+                // Top "dashboard" card with luxury animations
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .scale(cardScale)
+                        .alpha(cardAlpha),
                     shape = RoundedCornerShape(32.dp),
                     color = DaylightColors.Surface,
-                    tonalElevation = 8.dp
+                    tonalElevation = 12.dp,
+                    shadowElevation = 8.dp
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -245,19 +300,27 @@ fun PairingScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Discover button
+                    // Discover button with animation
                     Button(
-                        onClick = onStartScan,
+                        onClick = {
+                            buttonPressed = true
+                            onStartScan()
+                        },
                         enabled = !isScanning,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
+                            .height(56.dp)
+                            .scale(if (buttonPressed && !isScanning) 0.95f else 1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = DaylightColors.PrimaryAccent,
                             contentColor = Color.White,
                             disabledContainerColor = DaylightColors.PrimaryAccent.copy(alpha = 0.6f)
                         ),
-                        shape = RoundedCornerShape(999.dp)
+                        shape = RoundedCornerShape(999.dp),
+                        elevation = ButtonDefaults.buttonElevation(
+                            defaultElevation = 4.dp,
+                            pressedElevation = 2.dp
+                        )
                     ) {
                         if (isScanning) {
                             CircularProgressIndicator(
@@ -274,12 +337,17 @@ fun PairingScreen(
                     }
 
                     // Pair button appears when a device is found but not yet connected
-                    if (foundDevice != null && !isConnected) {
+                    AnimatedVisibility(
+                        visible = foundDevice != null && !isConnected,
+                        enter = slideInVertically() + fadeIn(),
+                        exit = slideOutVertically() + fadeOut()
+                    ) {
                         Surface(
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(999.dp),
                             color = DaylightColors.Surface,
-                            tonalElevation = 4.dp
+                            tonalElevation = 6.dp,
+                            shadowElevation = 4.dp
                         ) {
                             Row(
                                 modifier = Modifier
@@ -290,7 +358,7 @@ fun PairingScreen(
                             ) {
                                 Column {
                                     Text(
-                                        text = foundDevice,
+                                        text = foundDevice ?: "Unknown Device",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = DaylightColors.TextPrimary
                                     )
@@ -300,29 +368,49 @@ fun PairingScreen(
                                         color = DaylightColors.TextSecondary
                                     )
                                 }
-                                TextButton(onClick = onPairClick) {
+                                TextButton(onClick = {
+                                    buttonPressed = true
+                                    onPairClick()
+                                }) {
                                     Text("Pair")
                                 }
                             }
                         }
                     }
 
-                    if (isConnected) {
+                    AnimatedVisibility(
+                        visible = isConnected,
+                        enter = slideInVertically() + fadeIn(),
+                        exit = slideOutVertically() + fadeOut()
+                    ) {
                         Button(
-                            onClick = onContinue,
+                            onClick = {
+                                buttonPressed = true
+                                onContinue()
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(52.dp),
+                                .height(56.dp)
+                                .scale(if (buttonPressed) 0.95f else 1f),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = DaylightColors.Surface,
                                 contentColor = DaylightColors.TextPrimary
                             ),
-                            shape = RoundedCornerShape(999.dp)
+                            shape = RoundedCornerShape(999.dp),
+                            elevation = ButtonDefaults.buttonElevation(
+                                defaultElevation = 4.dp,
+                                pressedElevation = 2.dp
+                            )
                         ) {
-                            Text("Continue")
+                            Text(
+                                "Continue",
+                                fontSize = 17.sp,
+                                style = MaterialTheme.typography.labelLarge
+                            )
                         }
                     }
                 }
+            }
             }
         }
     }

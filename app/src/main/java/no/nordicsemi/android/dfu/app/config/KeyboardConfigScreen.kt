@@ -1,5 +1,6 @@
 package no.nordicsemi.android.dfu.app.config
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,11 +10,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.hilt.navigation.compose.hiltViewModel
+import no.nordicsemi.android.dfu.app.R
 import no.nordicsemi.android.dfu.app.theme.DaylightColors
 import no.nordicsemi.android.dfu.app.theme.DaylightTheme
 
@@ -46,11 +51,24 @@ internal fun KeyboardConfigScreen(viewModel: KeyboardConfigViewModel = hiltViewM
             }
         ) { padding ->
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.White)
-                    .padding(padding)
+                modifier = Modifier.fillMaxSize()
             ) {
+                // Background image at 20% opacity
+                Image(
+                    painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .alpha(0.2f)
+                )
+                
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.White)
+                        .padding(padding)
+                ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -72,6 +90,7 @@ internal fun KeyboardConfigScreen(viewModel: KeyboardConfigViewModel = hiltViewM
                         style = MaterialTheme.typography.bodyMedium,
                         color = DaylightColors.TextSecondary
                     )
+                }
                 }
             }
         }

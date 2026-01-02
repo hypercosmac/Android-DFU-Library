@@ -31,7 +31,10 @@
 
 package no.nordicsemi.android.dfu.profile.main.view
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -48,6 +51,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -65,7 +71,18 @@ internal fun DFUScreen() {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val onEvent: (DFUViewEvent) -> Unit = { viewModel.onEvent(it) }
 
-    Column {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image at 20% opacity
+        Image(
+            painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.2f)
+        )
+        
+        Column {
         NordicAppBar(
             title = { Text(text = stringResource(R.string.dfu_title)) },
             actions = {
@@ -107,5 +124,6 @@ internal fun DFUScreen() {
 
         // Allow user to Opt-In to analytics collection.
         AnalyticsPermissionRequestDialog()
+        }
     }
 }

@@ -5,7 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -13,6 +13,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import no.nordicsemi.android.dfu.app.bluetooth.BluetoothPermissions
 import no.nordicsemi.android.dfu.app.onboarding.screens.*
 import no.nordicsemi.android.dfu.app.permissions.*
+import no.nordicsemi.android.dfu.app.onboarding.OnboardingAnimations
+import no.nordicsemi.android.dfu.app.onboarding.OnboardingPageIndicator
+import no.nordicsemi.android.dfu.app.onboarding.rememberOnboardingAudioManager
 
 @Composable
 fun OnboardingScreen(
@@ -22,6 +25,7 @@ fun OnboardingScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val activity = context as? Activity
+    val audioManager = rememberOnboardingAudioManager()
     
     // Permission handling
     var showPermissionDialog by remember { mutableStateOf(false) }
@@ -86,19 +90,27 @@ fun OnboardingScreen(
         )
     }
     
-    AnimatedContent(
-        targetState = uiState.currentStep,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(250)) togetherWith
-            fadeOut(animationSpec = tween(200))
-        },
-        modifier = Modifier.fillMaxSize(),
-        label = "onboarding_transition"
-    ) { step ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Page indicator overlay
+        OnboardingPageIndicator(
+            currentStep = uiState.currentStep,
+            modifier = Modifier.fillMaxSize()
+        )
+        
+        // Animated content with luxury transitions
+        AnimatedContent(
+            targetState = uiState.currentStep,
+            transitionSpec = {
+                OnboardingAnimations.slideTransitionSpec()
+            },
+            modifier = Modifier.fillMaxSize(),
+            label = "onboarding_transition"
+        ) { step ->
         when (step) {
             is OnboardingStep.Welcome -> {
                 WelcomeScreen(
                     onContinue = {
+                        audioManager.playTransitionSound()
                         viewModel.navigateToStep(OnboardingStep.Intro)
                     }
                 )
@@ -106,6 +118,7 @@ fun OnboardingScreen(
             is OnboardingStep.Intro -> {
                 IntroScreen(
                     onContinue = {
+                        audioManager.playTransitionSound()
                         viewModel.navigateToStep(OnboardingStep.Pairing)
                     }
                 )
@@ -135,6 +148,7 @@ fun OnboardingScreen(
                         viewModel.connectToDevice()
                     },
                     onContinue = {
+                        audioManager.playTransitionSound()
                         viewModel.navigateToStep(OnboardingStep.Guidance)
                     }
                 )
@@ -142,6 +156,7 @@ fun OnboardingScreen(
             is OnboardingStep.Guidance -> {
                 GuidanceScreen(
                     onContinue = {
+                        audioManager.playTransitionSound()
                         viewModel.navigateToStep(OnboardingStep.Preferences)
                     }
                 )
@@ -150,9 +165,11 @@ fun OnboardingScreen(
                 PreferencesScreen(
                     preferences = uiState.preferences,
                     onPreferenceChanged = { prefs ->
+                        audioManager.playClickSound()
                         viewModel.updatePreferences(prefs)
                     },
                     onContinue = {
+                        audioManager.playTransitionSound()
                         viewModel.navigateToStep(OnboardingStep.Done)
                     }
                 )
@@ -160,12 +177,14 @@ fun OnboardingScreen(
             is OnboardingStep.Done -> {
                 DoneScreen(
                     onBegin = {
+                        audioManager.playSuccessSound()
                         viewModel.completeOnboarding()
                         onComplete()
                     }
                 )
             }
         }
+    }
     }
 }
 

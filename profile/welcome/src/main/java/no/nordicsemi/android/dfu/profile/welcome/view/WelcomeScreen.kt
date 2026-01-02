@@ -42,6 +42,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -61,7 +62,17 @@ internal fun WelcomeScreen() {
     val viewModel = hiltViewModel<WelcomeViewModel>()
     val firstRun by viewModel.firstRun.collectAsStateWithLifecycle()
 
-    Box {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Background image at 20% opacity
+        Image(
+            painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(0.2f)
+        )
+        
         Column {
             if (firstRun) {
                 NordicAppBar(

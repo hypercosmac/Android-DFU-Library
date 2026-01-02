@@ -1,5 +1,6 @@
 package no.nordicsemi.android.dfu.app.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.BorderStroke
@@ -11,11 +12,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import no.nordicsemi.android.dfu.app.R
 import no.nordicsemi.android.dfu.app.theme.DaylightColors
 import no.nordicsemi.android.dfu.app.theme.DaylightTheme
 
@@ -27,10 +32,23 @@ fun HomeScreen(
 ) {
     DaylightTheme {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
+            modifier = Modifier.fillMaxSize()
         ) {
+            // Background image at 20% opacity
+            Image(
+                painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(0.2f)
+            )
+            
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -83,6 +101,7 @@ fun HomeScreen(
                 )
                 
                 Spacer(modifier = Modifier.weight(1f))
+            }
             }
         }
     }
