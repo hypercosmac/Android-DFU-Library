@@ -24,6 +24,7 @@ dependencies {
     implementation(project(":lib:analytics"))
     implementation(project(":lib:storage")) // Deep link support
     implementation(project(":profile:navigation"))
+    implementation(project(":profile:main"))
 
     implementation(nordic.theme)
     implementation(nordic.navigation)

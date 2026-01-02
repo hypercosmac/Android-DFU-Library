@@ -41,6 +41,9 @@ import no.nordicsemi.android.common.navigation.NavigationView
 import no.nordicsemi.android.common.theme.NordicActivity
 import no.nordicsemi.android.dfu.analytics.DfuAnalytics
 import no.nordicsemi.android.dfu.analytics.HandleDeepLinkEvent
+import no.nordicsemi.android.dfu.app.config.KeyboardConfigDestination
+import no.nordicsemi.android.dfu.app.home.HomeDestination
+import no.nordicsemi.android.dfu.app.onboarding.OnboardingDestination
 import no.nordicsemi.android.dfu.app.onboarding.OnboardingRepository
 import no.nordicsemi.android.dfu.app.onboarding.OnboardingScreen
 import no.nordicsemi.android.dfu.app.theme.DaylightTheme
@@ -84,7 +87,9 @@ class MainActivity : NordicActivity() {
                         }
                     )
                 } else {
-                    NavigationView(DfuDestinations)
+                    NavigationView(
+                        HomeDestination + DfuDestinations + KeyboardConfigDestination + OnboardingDestination
+                    )
                 }
             }
         }
