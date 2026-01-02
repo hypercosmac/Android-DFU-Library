@@ -23,7 +23,9 @@ data class OnboardingUiState(
     val currentStep: OnboardingStep = OnboardingStep.Welcome,
     val isScanning: Boolean = false,
     val foundDevice: BluetoothDevice? = null,
+    val allDiscoveredDevices: List<BluetoothDevice> = emptyList(),
     val isConnected: Boolean = false,
+    val connectedDeviceAddress: String? = null,
     val connectionError: String? = null,
     val preferences: OnboardingPreferences = OnboardingPreferences()
 )
@@ -59,9 +61,24 @@ class OnboardingViewModel @Inject constructor(
             bluetoothManager.connectionState
         ) { scanState, devices, connectionState ->
             val isScanning = scanState is BluetoothManager.ScanState.Scanning
-            val foundDevice = devices.firstOrNull()?.let { device ->
+            val allDevices = devices.map { device ->
                 BluetoothDevice(name = device.name, address = device.address)
             }
+            // Sort devices: DAYLIGHT_KB-1 first, then by RSSI
+            val sortedDevices = allDevices.sortedWith(
+                compareByDescending<BluetoothDevice> { it.name?.contains("DAYLIGHT_KB-1", ignoreCase = true) == true }
+                    .thenByDescending { device ->
+                        devices.firstOrNull { it.address == device.address }?.rssi ?: 0
+                    }
+            )
+            // Get the actually connected device, not just the first one
+            val connectedDeviceAddress = when (connectionState) {
+                is ConnectionState.Connected -> connectionState.deviceAddress
+                else -> null
+            }
+            val foundDevice = connectedDeviceAddress?.let { address ->
+                sortedDevices.firstOrNull { it.address == address }
+            } ?: sortedDevices.firstOrNull()
             val isConnected = connectionState is ConnectionState.Connected
             val connectionError = when (connectionState) {
                 is ConnectionState.Error -> connectionState.message
@@ -71,7 +88,9 @@ class OnboardingViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 isScanning = isScanning,
                 foundDevice = foundDevice,
+                allDiscoveredDevices = sortedDevices,
                 isConnected = isConnected,
+                connectedDeviceAddress = connectedDeviceAddress,
                 connectionError = connectionError
             )
         }
@@ -106,10 +125,10 @@ class OnboardingViewModel @Inject constructor(
         // Clear previous errors
         _uiState.value = _uiState.value.copy(connectionError = null)
         
-        // Start scanning with filter for keyboard devices
+        // Start scanning for all devices (no filter)
         bluetoothManager.startScanning(
-            filterByName = "keyboard", // Filter for keyboard-related devices (can be "DAYLIGHT", "keyboard", etc.)
-            timeoutMillis = 15000L // 15 second timeout
+            filterByName = null, // Show all devices
+            timeoutMillis = 30000L // 30 second timeout to allow more devices to be discovered
         )
     }
 
@@ -121,11 +140,17 @@ class OnboardingViewModel @Inject constructor(
     }
 
     /**
-     * Connects to the currently found device
+     * Connects to a specific device by address
      */
-    fun connectToDevice() {
+    fun connectToDevice(deviceAddress: String? = null) {
         val devices = bluetoothManager.discoveredDevices.value
-        val device = devices.firstOrNull()
+        val device = if (deviceAddress != null) {
+            devices.firstOrNull { it.address == deviceAddress }
+        } else {
+            // Default to DAYLIGHT_KB-1 if available, otherwise first device
+            devices.firstOrNull { it.name?.contains("DAYLIGHT_KB-1", ignoreCase = true) == true }
+                ?: devices.firstOrNull()
+        }
         
         if (device == null) {
             _uiState.value = _uiState.value.copy(

@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanRecord
 import android.bluetooth.le.ScanSettings
 import android.content.Context
 import android.os.Build
@@ -39,8 +40,8 @@ data class DiscoveredDevice(
  */
 sealed class ConnectionState {
     object Disconnected : ConnectionState()
-    object Connecting : ConnectionState()
-    object Connected : ConnectionState()
+    data class Connecting(val deviceAddress: String) : ConnectionState()
+    data class Connected(val deviceAddress: String) : ConnectionState()
     data class Error(val message: String) : ConnectionState()
 }
 
@@ -70,8 +71,10 @@ class BluetoothManager @Inject constructor(
     val discoveredDevices: StateFlow<List<DiscoveredDevice>> = _discoveredDevices.asStateFlow()
 
     private var currentGatt: BluetoothGatt? = null
+    private var connectedDeviceAddress: String? = null
     private var scanJob: Job? = null
     private var connectionJob: Job? = null
+    private var classicBluetoothReceiver: android.content.BroadcastReceiver? = null
     
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -89,22 +92,26 @@ class BluetoothManager @Inject constructor(
     
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            val deviceAddress = gatt.device.address
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> {
-                    _connectionState.value = ConnectionState.Connected
+                    connectedDeviceAddress = deviceAddress
+                    _connectionState.value = ConnectionState.Connected(deviceAddress)
                     // Discover services
                     gatt.discoverServices()
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
+                    connectedDeviceAddress = null
                     _connectionState.value = ConnectionState.Disconnected
                     currentGatt = null
                 }
                 BluetoothProfile.STATE_CONNECTING -> {
-                    _connectionState.value = ConnectionState.Connecting
+                    _connectionState.value = ConnectionState.Connecting(deviceAddress)
                 }
             }
             
             if (status != BluetoothGatt.GATT_SUCCESS) {
+                connectedDeviceAddress = null
                 _connectionState.value = ConnectionState.Error("Connection failed with status: $status")
                 currentGatt = null
             }
@@ -141,8 +148,7 @@ class BluetoothManager @Inject constructor(
     }
 
     /**
-     * Starts scanning for BLE devices
-     * Filters devices by name pattern (keyboard-related names)
+     * Starts scanning for BLE devices and includes already paired devices
      */
     @RequiresPermission(allOf = [Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_CONNECT])
     fun startScanning(
@@ -159,24 +165,111 @@ class BluetoothManager @Inject constructor(
             return
         }
 
-        if (bluetoothLeScanner == null) {
-            _scanState.value = ScanState.Error("Bluetooth LE Scanner not available")
-            return
-        }
-
         // Stop any existing scan
         stopScanning()
 
         _scanState.value = ScanState.Scanning
+        // Clear devices at the start of a new scan
         _discoveredDevices.value = emptyList()
+        
+        // First, add already paired/bonded devices immediately
+        try {
+            val bondedDevices = bluetoothAdapter?.bondedDevices ?: emptySet()
+            val bondedDeviceList = bondedDevices.map { device ->
+                DiscoveredDevice(
+                    name = device.name ?: "Device ${device.address.takeLast(5)}",
+                    address = device.address,
+                    rssi = 0, // Bonded devices don't have RSSI
+                    device = device
+                )
+            }
+            if (bondedDeviceList.isNotEmpty()) {
+                _discoveredDevices.value = bondedDeviceList.sortedWith(
+                    compareByDescending<DiscoveredDevice> { 
+                        it.name?.contains("DAYLIGHT_KB-1", ignoreCase = true) == true 
+                    }.thenByDescending { it.rssi }
+                )
+            }
+        } catch (e: Exception) {
+            // Ignore errors when accessing bonded devices
+        }
 
-        // Configure scan settings
-        val scanSettings = ScanSettings.Builder()
-            .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
-            .build()
+        // Start BLE scanning if available
+        if (bluetoothLeScanner != null) {
+            // Configure scan settings for better discovery
+            val scanSettings = ScanSettings.Builder()
+                .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setReportDelay(0) // Report results immediately
+                .build()
 
-        // Start scanning
-        bluetoothLeScanner.startScan(null, scanSettings, scanCallback)
+            // Start scanning with no filters to find all devices
+            try {
+                bluetoothLeScanner.startScan(null, scanSettings, scanCallback)
+            } catch (e: Exception) {
+                _scanState.value = ScanState.Error("Failed to start scan: ${e.message}")
+            }
+        }
+        
+        // Also start classic Bluetooth discovery
+        try {
+            if (bluetoothAdapter?.isDiscovering == false) {
+                bluetoothAdapter?.startDiscovery()
+                
+                // Register receiver for classic Bluetooth devices
+                if (classicBluetoothReceiver == null) {
+                    classicBluetoothReceiver = object : android.content.BroadcastReceiver() {
+                        override fun onReceive(context: Context?, intent: android.content.Intent?) {
+                            when (intent?.action) {
+                                BluetoothDevice.ACTION_FOUND -> {
+                                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                                    val rssi: Short = intent.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE)
+                                    
+                                    device?.let {
+                                        val deviceName = it.name ?: "Device ${it.address.takeLast(5)}"
+                                        val discoveredDevice = DiscoveredDevice(
+                                            name = deviceName,
+                                            address = it.address,
+                                            rssi = rssi.toInt(),
+                                            device = it
+                                        )
+                                        
+                                        // Update discovered devices list
+                                        val currentDevices = _discoveredDevices.value.toMutableList()
+                                        val existingIndex = currentDevices.indexOfFirst { d -> d.address == discoveredDevice.address }
+                                        
+                                        if (existingIndex >= 0) {
+                                            // Update if RSSI is better
+                                            if (rssi.toInt() > currentDevices[existingIndex].rssi) {
+                                                currentDevices[existingIndex] = discoveredDevice
+                                            }
+                                        } else {
+                                            currentDevices.add(discoveredDevice)
+                                        }
+                                        
+                                        // Sort: DAYLIGHT_KB-1 first, then by RSSI
+                                        _discoveredDevices.value = currentDevices.sortedWith(
+                                            compareByDescending<DiscoveredDevice> { 
+                                                it.name?.contains("DAYLIGHT_KB-1", ignoreCase = true) == true 
+                                            }.thenByDescending { it.rssi }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    val filter = android.content.IntentFilter(BluetoothDevice.ACTION_FOUND)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        context.registerReceiver(classicBluetoothReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                    } else {
+                        context.registerReceiver(classicBluetoothReceiver, filter)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // Classic Bluetooth discovery might not be available or permitted
+            // Continue with BLE scanning only
+        }
 
         // Auto-stop after timeout
         scanJob = scope.launch {
@@ -192,13 +285,25 @@ class BluetoothManager @Inject constructor(
      */
     private fun handleScanResult(scanResult: ScanResult) {
         val device = scanResult.device
-        val deviceName = device.name ?: "Unknown Device"
-        val scanRecord = scanResult.scanRecord
         val rssi = scanResult.rssi
-
-        // Filter out devices without meaningful names
-        if (deviceName.isBlank() || deviceName == "Unknown Device") {
-            return
+        
+        // Get device name from device or scan record
+        var deviceName: String? = device.name
+        if (deviceName == null) {
+            // Try to get name from scan record
+            val scanRecord = scanResult.scanRecord
+            if (scanRecord != null) {
+                try {
+                    deviceName = scanRecord.deviceName
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+        }
+        
+        // Use MAC address as fallback if no name
+        if (deviceName.isNullOrBlank()) {
+            deviceName = "Device ${device.address.takeLast(5)}"
         }
 
         val discoveredDevice = DiscoveredDevice(
@@ -213,14 +318,29 @@ class BluetoothManager @Inject constructor(
         val existingIndex = currentDevices.indexOfFirst { it.address == discoveredDevice.address }
         
         if (existingIndex >= 0) {
-            // Update existing device (might have better RSSI)
-            currentDevices[existingIndex] = discoveredDevice
+            // Update existing device (might have better RSSI or name)
+            val existing = currentDevices[existingIndex]
+            // Prefer device with a name over one without
+            val shouldUpdate = if (existing.name == null || existing.name.startsWith("Device ")) {
+                deviceName != null && !deviceName.startsWith("Device ")
+            } else {
+                // Update if RSSI is better or if we got a name
+                rssi > existing.rssi || (deviceName != null && existing.name == null)
+            }
+            if (shouldUpdate) {
+                currentDevices[existingIndex] = discoveredDevice
+            }
         } else {
             // Add new device
             currentDevices.add(discoveredDevice)
         }
         
-        _discoveredDevices.value = currentDevices.sortedByDescending { it.rssi }
+        // Sort: DAYLIGHT_KB-1 first, then by RSSI
+        _discoveredDevices.value = currentDevices.sortedWith(
+            compareByDescending<DiscoveredDevice> { 
+                it.name?.contains("DAYLIGHT_KB-1", ignoreCase = true) == true 
+            }.thenByDescending { it.rssi }
+        )
     }
 
     /**
@@ -231,7 +351,29 @@ class BluetoothManager @Inject constructor(
         scanJob?.cancel()
         scanJob = null
         
-        bluetoothLeScanner?.stopScan(scanCallback)
+        // Stop BLE scanning
+        try {
+            bluetoothLeScanner?.stopScan(scanCallback)
+        } catch (e: Exception) {
+            // Ignore
+        }
+        
+        // Stop classic Bluetooth discovery
+        try {
+            bluetoothAdapter?.cancelDiscovery()
+        } catch (e: Exception) {
+            // Ignore
+        }
+        
+        // Unregister classic Bluetooth receiver
+        try {
+            classicBluetoothReceiver?.let {
+                context.unregisterReceiver(it)
+                classicBluetoothReceiver = null
+            }
+        } catch (e: Exception) {
+            // Ignore if already unregistered
+        }
         
         if (_scanState.value is ScanState.Scanning) {
             _scanState.value = ScanState.Idle
@@ -259,7 +401,7 @@ class BluetoothManager @Inject constructor(
         // Disconnect from previous device if any
         disconnect()
 
-        _connectionState.value = ConnectionState.Connecting
+        _connectionState.value = ConnectionState.Connecting(device.address)
 
         connectionJob = scope.launch {
             try {
@@ -271,6 +413,7 @@ class BluetoothManager @Inject constructor(
                 }
                 currentGatt = gatt
             } catch (e: Exception) {
+                connectedDeviceAddress = null
                 _connectionState.value = ConnectionState.Error("Connection failed: ${e.message}")
                 currentGatt = null
             }
@@ -290,12 +433,19 @@ class BluetoothManager @Inject constructor(
                 currentGatt?.disconnect()
                 currentGatt?.close()
                 currentGatt = null
+                connectedDeviceAddress = null
                 _connectionState.value = ConnectionState.Disconnected
             } catch (e: Exception) {
+                connectedDeviceAddress = null
                 _connectionState.value = ConnectionState.Error("Disconnect failed: ${e.message}")
             }
         }
     }
+
+    /**
+     * Gets the address of the currently connected device
+     */
+    fun getConnectedDeviceAddress(): String? = connectedDeviceAddress
 
     /**
      * Cleans up resources
@@ -303,6 +453,16 @@ class BluetoothManager @Inject constructor(
     fun cleanup() {
         stopScanning()
         disconnect()
+        
+        // Ensure receiver is unregistered
+        try {
+            classicBluetoothReceiver?.let {
+                context.unregisterReceiver(it)
+                classicBluetoothReceiver = null
+            }
+        } catch (e: Exception) {
+            // Ignore
+        }
     }
 }
 

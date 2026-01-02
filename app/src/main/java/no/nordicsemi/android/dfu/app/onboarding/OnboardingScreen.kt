@@ -127,7 +127,9 @@ fun OnboardingScreen(
                 PairingScreen(
                     isScanning = uiState.isScanning,
                     foundDevice = uiState.foundDevice?.name,
+                    allDevices = uiState.allDiscoveredDevices,
                     isConnected = uiState.isConnected,
+                    connectedDeviceAddress = uiState.connectedDeviceAddress,
                     connectionError = uiState.connectionError,
                     onStartScan = {
                         if (activity != null) {
@@ -144,8 +146,8 @@ fun OnboardingScreen(
                             }
                         }
                     },
-                    onPairClick = {
-                        viewModel.connectToDevice()
+                    onPairClick = { deviceAddress ->
+                        viewModel.connectToDevice(deviceAddress)
                     },
                     onContinue = {
                         audioManager.playTransitionSound()

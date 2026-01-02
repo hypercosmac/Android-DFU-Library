@@ -4,7 +4,11 @@ import androidx.compose.animation.core.*
 import androidx.compose.animation.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
@@ -23,22 +27,27 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.zIndex
 import no.nordicsemi.android.dfu.app.theme.DaylightColors
 import no.nordicsemi.android.dfu.app.theme.DaylightTheme
 import no.nordicsemi.android.dfu.app.R
+import no.nordicsemi.android.dfu.app.onboarding.BluetoothDevice
 
 @Composable
 fun PairingScreen(
     isScanning: Boolean,
     foundDevice: String?,
+    allDevices: List<BluetoothDevice>,
     isConnected: Boolean,
+    connectedDeviceAddress: String? = null,
     connectionError: String? = null,
     onStartScan: () -> Unit,
-    onPairClick: () -> Unit,
+    onPairClick: (String?) -> Unit,
     onContinue: () -> Unit
 ) {
     // Entrance animations
@@ -64,12 +73,30 @@ fun PairingScreen(
     )
     
     var buttonPressed by remember { mutableStateOf(false) }
+    var showConfetti by remember { mutableStateOf(false) }
+    
+    // Show confetti when connected
+    LaunchedEffect(isConnected) {
+        if (isConnected) {
+            showConfetti = true
+            kotlinx.coroutines.delay(2000) // Show for 2 seconds
+            showConfetti = false
+        }
+    }
     
     DaylightTheme {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            // Confetti animation overlay
+            ConfettiAnimation(
+                visible = showConfetti,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .zIndex(10f)
+            )
+            
             // Background image at 20% opacity
             Image(
                 painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
@@ -186,24 +213,27 @@ fun PairingScreen(
                     }
                 }
 
-                // Middle pill with animated bluetooth + copy
+                // Middle section with device list or status
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .weight(1f)
                         .padding(top = 32.dp),
                     shape = RoundedCornerShape(32.dp),
                     color = DaylightColors.Overlay.copy(alpha = 0.12f),
                     tonalElevation = 0.dp
                 ) {
                     Column(
-                        modifier = Modifier.padding(48.dp),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         // Bluetooth icon with pulse animation
                         val infiniteTransition = rememberInfiniteTransition(label = "pulse")
                         val alpha by infiniteTransition.animateFloat(
                             initialValue = 0.3f,
-                                targetValue = 1f,
+                            targetValue = 1f,
                             animationSpec = infiniteRepeatable(
                                 animation = tween(1000, easing = FastOutSlowInEasing),
                                 repeatMode = RepeatMode.Reverse
@@ -215,12 +245,12 @@ fun PairingScreen(
                             imageVector = Icons.Default.Bluetooth,
                             contentDescription = null,
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(48.dp)
                                 .alpha(if (isScanning && !isConnected) alpha else 1f),
                             tint = if (isConnected) DaylightColors.PrimaryAccent else DaylightColors.TextSecondary
                         )
                         
-                        Spacer(modifier = Modifier.height(24.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
                         
                         when {
                             isConnected -> {
@@ -229,22 +259,9 @@ fun PairingScreen(
                                     style = MaterialTheme.typography.titleLarge,
                                     color = DaylightColors.TextPrimary
                                 )
-                                Spacer(modifier = Modifier.height(16.dp))
+                                Spacer(modifier = Modifier.height(8.dp))
                                 Text(
                                     text = foundDevice ?: "Keyboard Case",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = DaylightColors.TextSecondary
-                                )
-                            }
-                            foundDevice != null -> {
-                                Text(
-                                    text = "Found keyboard",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = DaylightColors.TextPrimary
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = foundDevice,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = DaylightColors.TextSecondary
                                 )
@@ -264,14 +281,53 @@ fun PairingScreen(
                                 )
                             }
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Bring your keyboard close. When you're ready, discover devices and pick your keyboard to pair.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = DaylightColors.TextSecondary,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.padding(top = 4.dp)
-                        )
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Device list
+                        if (allDevices.isNotEmpty()) {
+                            Text(
+                                text = "Available devices:",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = DaylightColors.TextSecondary,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(allDevices) { device ->
+                                    DeviceListItem(
+                                        device = device,
+                                        isHighlighted = device.name?.contains("DAYLIGHT_KB-1", ignoreCase = true) == true,
+                                        onClick = {
+                                            if (!isConnected) {
+                                                onPairClick(device.address)
+                                            }
+                                        },
+                                        isConnected = isConnected && connectedDeviceAddress == device.address
+                                    )
+                                }
+                            }
+                        } else if (isScanning) {
+                            Text(
+                                text = "Scanning for devices...",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = DaylightColors.TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        } else {
+                            Text(
+                                text = "Bring your keyboard close. When you're ready, discover devices and pick your keyboard to pair.",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = DaylightColors.TextSecondary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                         
                         // Show error message if present
                         if (connectionError != null) {
@@ -336,48 +392,8 @@ fun PairingScreen(
                         }
                     }
 
-                    // Pair button appears when a device is found but not yet connected
-                    AnimatedVisibility(
-                        visible = foundDevice != null && !isConnected,
-                        enter = slideInVertically() + fadeIn(),
-                        exit = slideOutVertically() + fadeOut()
-                    ) {
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(999.dp),
-                            color = DaylightColors.Surface,
-                            tonalElevation = 6.dp,
-                            shadowElevation = 4.dp
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Column {
-                                    Text(
-                                        text = foundDevice ?: "Unknown Device",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = DaylightColors.TextPrimary
-                                    )
-                                    Text(
-                                        text = "Tap to pair and continue",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = DaylightColors.TextSecondary
-                                    )
-                                }
-                                TextButton(onClick = {
-                                    buttonPressed = true
-                                    onPairClick()
-                                }) {
-                                    Text("Pair")
-                                }
-                            }
-                        }
-                    }
 
+                    // Continue button appears when connected
                     AnimatedVisibility(
                         visible = isConnected,
                         enter = slideInVertically() + fadeIn(),
@@ -393,8 +409,8 @@ fun PairingScreen(
                                 .height(56.dp)
                                 .scale(if (buttonPressed) 0.95f else 1f),
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = DaylightColors.Surface,
-                                contentColor = DaylightColors.TextPrimary
+                                containerColor = DaylightColors.PrimaryAccent,
+                                contentColor = Color.White
                             ),
                             shape = RoundedCornerShape(999.dp),
                             elevation = ButtonDefaults.buttonElevation(
@@ -412,6 +428,90 @@ fun PairingScreen(
                 }
             }
             }
+        }
+    }
+}
+
+@Composable
+private fun DeviceListItem(
+    device: BluetoothDevice,
+    isHighlighted: Boolean,
+    onClick: () -> Unit,
+    isConnected: Boolean
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = !isConnected, onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = if (isHighlighted) {
+            DaylightColors.PrimaryAccent.copy(alpha = 0.15f)
+        } else {
+            DaylightColors.Surface.copy(alpha = 0.6f)
+        },
+        tonalElevation = if (isHighlighted) 4.dp else 2.dp,
+        shadowElevation = if (isHighlighted) 2.dp else 1.dp,
+        border = if (isHighlighted) {
+            BorderStroke(
+                2.dp,
+                DaylightColors.PrimaryAccent.copy(alpha = 0.5f)
+            )
+        } else null
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = device.name ?: "Unknown Device",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = DaylightColors.TextPrimary,
+                        fontWeight = if (isHighlighted) FontWeight.Bold else FontWeight.Normal
+                    )
+                    if (isHighlighted) {
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = DaylightColors.PrimaryAccent.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "Recommended",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = DaylightColors.PrimaryAccent,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+                if (isConnected) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Connected",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = DaylightColors.PrimaryAccent,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+            Icon(
+                imageVector = Icons.Default.Bluetooth,
+                contentDescription = null,
+                tint = if (isConnected) DaylightColors.PrimaryAccent else if (isHighlighted) DaylightColors.PrimaryAccent else DaylightColors.TextSecondary,
+                modifier = Modifier.size(24.dp)
+            )
         }
     }
 }
