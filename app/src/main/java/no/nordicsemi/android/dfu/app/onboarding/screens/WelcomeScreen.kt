@@ -87,41 +87,19 @@ fun WelcomeScreen(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .alpha(0.2f)
+                    .alpha(0.1f)
             )
-            
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 32.dp, vertical = 40.dp)
+                    .padding(horizontal = 32.dp, vertical = 20.dp)
             ) {
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
-                // Logo
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth(0.7f)
-                        .heightIn(max = 220.dp),
-                    shape = RoundedCornerShape(20.dp),
-                    color = Color.White,
-                    tonalElevation = 0.dp
-                ) {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.keyboard_case_guidance),
-                            contentDescription = "Daylight",
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-                
-                // Animated text
+                // Headline text
                 Text(
                     text = "Get ready for your Daylight Keyboard Case!",
                     style = MaterialTheme.typography.headlineMedium,
@@ -130,7 +108,29 @@ fun WelcomeScreen(
                     modifier = Modifier.alpha(textAlpha)
                 )
 
-                // Animated button with luxury design
+                // Logo
+//               /* Surface(
+//                    modifier = Modifier
+//                        .fillMaxWidth(0.25f)
+//                        .heightIn(max = 220.dp),
+//                    shape = RoundedCornerShape(55.dp),
+//                    color = Color.Transparent,
+//                    tonalElevation = 2.dp
+//                ) {
+//                    Box(
+//                        modifier = Modifier.fillMaxSize(),
+//                        contentAlignment = Alignment.Center
+//                    ) {
+//                        Image(
+//                            painter = painterResource(id = R.drawable.keyboard_case_guidance),
+//                            contentDescription = "Daylight",
+//                            contentScale = ContentScale.Fit,
+//                            modifier = Modifier.fillMaxSize()
+//                        )
+//                    }
+//                }/*
+
+                // Animated button
                 Button(
                     onClick = {
                         buttonPressed = true

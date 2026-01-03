@@ -113,7 +113,7 @@ internal fun DFUScreen() {
                     actionIconContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 ),
-                actions = {
+                /*actions = {
                     LoggerAppBarIcon(onClick = { onEvent(OnLoggerButtonClick) })
                     IconButton(onClick = { onEvent(OnSettingsButtonClick) }) {
                         Icon(
@@ -121,7 +121,7 @@ internal fun DFUScreen() {
                             contentDescription = stringResource(id = R.string.dfu_settings_action)
                         )
                     }
-                }
+                }*/
             )
 
             // Download firmware button at the top

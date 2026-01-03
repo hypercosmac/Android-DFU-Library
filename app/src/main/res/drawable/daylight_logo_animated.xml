@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2022, Nordic Semiconductor
+  ~ All rights reserved.
+  -->
+
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:drawable="@drawable/daylight_logo_vector">
+    
+    <target android:name="largeShape">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:propertyName="scaleX"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:interpolator/accelerate_decelerate"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="largeShape">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:propertyName="scaleY"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:interpolator/accelerate_decelerate"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="largePath">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:propertyName="alpha"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="mediumShape">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:startOffset="200"
+                android:propertyName="scaleX"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:interpolator/accelerate_decelerate"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="mediumShape">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:startOffset="200"
+                android:propertyName="scaleY"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:interpolator/accelerate_decelerate"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="mediumPath">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:startOffset="200"
+                android:propertyName="alpha"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="smallShape">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:startOffset="400"
+                android:propertyName="scaleX"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:interpolator/accelerate_decelerate"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="smallShape">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:startOffset="400"
+                android:propertyName="scaleY"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"
+                android:interpolator="@android:interpolator/accelerate_decelerate"/>
+        </aapt:attr>
+    </target>
+    
+    <target android:name="circlePath">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="400"
+                android:startOffset="400"
+                android:propertyName="alpha"
+                android:valueFrom="0.0"
+                android:valueTo="1.0"
+                android:valueType="floatType"/>
+        </aapt:attr>
+    </target>
+</animated-vector>
+

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Copyright (c) 2022, Nordic Semiconductor
+  ~ All rights reserved.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="250dp"
+    android:viewportWidth="500"
+    android:viewportHeight="500">
+    
+    <!-- Large L/D shape (appears first) - starts invisible and scaled down -->
+    <group
+        android:name="largeShape"
+        android:pivotX="250"
+        android:pivotY="250"
+        android:scaleX="0.0"
+        android:scaleY="0.0">
+        <path
+            android:name="largePath"
+            android:fillColor="#17190f"
+            android:pathData="M343.75,18.19115v325.55885H18.19124c37.08868,91.61549,126.89381,156.25,231.80876,156.25,138.07106,0,250-111.92894,250-250,0-104.91505-64.63451-194.72008-156.25-231.80885Z"
+            android:alpha="0.0"/>
+    </group>
+    
+    <!-- Medium quarter-circle (appears second) - starts invisible and scaled down -->
+    <group
+        android:name="mediumShape"
+        android:pivotX="164.0625"
+        android:pivotY="164.0625"
+        android:scaleX="0.0"
+        android:scaleY="0.0">
+        <path
+            android:name="mediumPath"
+            android:fillColor="#17190f"
+            android:pathData="M171.875.18959v171.68541H.1895c4.07867,86.98044,75.88329,156.25,163.873,156.25,90.60926,0,164.0625-73.45333,164.0625-164.0625C328.125,76.07269,258.85563,4.26826,171.875.18959Z"
+            android:alpha="0.0"/>
+    </group>
+    
+    <!-- Small circle (appears third) - starts invisible and scaled down -->
+    <group
+        android:name="smallShape"
+        android:pivotX="78.125"
+        android:pivotY="78.125"
+        android:scaleX="0.0"
+        android:scaleY="0.0">
+        <path
+            android:name="circlePath"
+            android:fillColor="#17190f"
+            android:pathData="M 78.125,0 A 78.125,78.125 0 1,1 78.125,156.25 A 78.125,78.125 0 1,1 78.125,0 z"
+            android:alpha="0.0"/>
+    </group>
+</vector>

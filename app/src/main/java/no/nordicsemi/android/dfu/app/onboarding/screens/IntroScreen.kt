@@ -83,6 +83,15 @@ fun IntroScreen(
                     .background(DaylightColors.BackgroundPrimary),
                 contentAlignment = Alignment.Center
             ) {
+            // Background image at 20% opacity
+            Image(
+                painter = painterResource(id = R.drawable.ink_painting_9971068_1920),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(0.1f)
+            )
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween,
@@ -90,6 +99,26 @@ fun IntroScreen(
                     .fillMaxSize()
                     .padding(horizontal = 32.dp, vertical = 40.dp)
             ) {
+                 // Logo
+//                  Surface(
+//                    modifier = Modifier
+//                        .fillMaxWidth(0.25f)
+//                        .heightIn(max = 220.dp),
+//                    shape = RoundedCornerShape(55.dp),
+//                    color = Color.Transparent,
+//                    tonalElevation = 0.dp
+//                  ) {
+//                    Box(
+//                        modifier = Modifier.fillMaxSize(),
+//                        contentAlignment = Alignment.Center
+//                    ) {
+//                        Image(
+//                            painter = painterResource(id = R.drawable.keyboard_case_guidance),
+//                            contentDescription = "Daylight",
+//                            contentScale = ContentScale.Fit,
+//                            modifier = Modifier.fillMaxSize()
+//                        )
+//                    }
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Column(
